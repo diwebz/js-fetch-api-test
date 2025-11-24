@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Admin - Fee Details</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom Styles for the Multi-Select Simulation */
+        .multi-select-container {
+            position: relative;
+        }
+        .selected-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            padding: 4px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            min-height: 42px;
+            background: white;
+        }
+        .tag {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .tag-close {
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 50;
+            display: none;
+        }
+        .dropdown-item {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        .dropdown-item:hover {
+            background-color: #f3f4f6;
+        }
+        /* Toast Notification Animation */
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .toast {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800 h-screen flex overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-slate-900 text-white flex flex-col hidden md:flex">
+        <div class="p-6 text-2xl font-bold text-blue-400 flex items-center gap-2">
+            <i data-lucide="plane"></i> TravelAdmin
+        </div>
+        <nav class="flex-1 px-4 space-y-2">
+            <a href="#" class="flex items-center gap-3 p-3 rounded hover:bg-slate-800 text-gray-400">
+                <i data-lucide="ticket"></i> Air Tickets
+            </a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded hover:bg-slate-800 text-gray-400">
+                <i data-lucide="bed-double"></i> Hotels
+            </a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded bg-blue-600 text-white font-medium">
+                <i data-lucide="receipt"></i> Fee Details
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full relative">
+        
+        <!-- Header -->
+        <header class="bg-white h-16 shadow-sm flex items-center justify-between px-6">
+            <h1 class="text-xl font-semibold text-gray-700">Fee Details Dashboard</h1>
+            <div class="flex items-center gap-4">
+                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">A</div>
+                <span class="text-sm font-medium">Admin User</span>
+            </div>
+        </header>
+
+        <!-- Content Scroll Area -->
+        <div class="flex-1 overflow-y-auto p-6 relative">
+            
+            <!-- Action Bar -->
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-medium text-gray-600">Recent Fee Records</h2>
+                <div class="flex gap-2">
+                    <!-- Add Detail Button -->
+                    <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition shadow-sm">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Detail
+                    </button>
+                    <!-- Dropdown Trigger (Mock) -->
+                    <button class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-md shadow-sm">
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-gray-50 text-gray-500 text-sm uppercase tracking-wider">
+                        <tr>
+                            <th class="p-4 font-medium border-b">Res. ID</th>
+                            <th class="p-4 font-medium border-b">Customer(s)</th>
+                            <th class="p-4 font-medium border-b">Type</th>
+                            <th class="p-4 font-medium border-b">Travel Mode</th>
+                            <th class="p-4 font-medium border-b">Amount</th>
+                            <th class="p-4 font-medium border-b">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="feeTableBody" class="text-sm divide-y divide-gray-100">
+                        <!-- Initial Dummy Data -->
+                        <tr>
+                            <td class="p-4 font-mono text-gray-600">RES-8821</td>
+                            <td class="p-4"><span class="bg-gray-100 px-2 py-1 rounded text-xs">CUST-001</span></td>
+                            <td class="p-4">Type 1</td>
+                            <td class="p-4">Business</td>
+                            <td class="p-4 font-medium text-gray-900">$450.00</td>
+                            <td class="p-4 text-green-600">Active</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- EDUCATIONAL: API Response Viewer -->
+            <div class="mt-8 border-t pt-4">
+                <h3 class="text-sm font-bold text-gray-500 mb-2 uppercase">Simulated Network Log (Learning Area)</h3>
+                <div class="bg-slate-900 text-green-400 p-4 rounded-lg font-mono text-xs h-48 overflow-y-auto" id="apiLog">
+                    <p class="opacity-50">// Requests and Responses from the backend will appear here...</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL -->
+    <div id="feeModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm hidden items-center justify-center z-50 transition-opacity">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl transform transition-all p-6">
+            
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h3 class="text-xl font-bold text-gray-800">Add Fee Detail</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <!-- Form -->
+            <form id="addFeeForm" onsubmit="handleSubmit(event)">
+                
+                <div class="space-y-4">
+                    
+                    <!-- Reservation ID -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Reservation ID</label>
+                        <input type="text" name="reservationId" placeholder="e.g., RES-12345"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <p class="text-xs text-gray-400 mt-1">Server validation: Cannot be empty.</p>
+                    </div>
+
+                    <!-- Customer ID (Simulated Multi-Select / Select2) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Customer IDs (Select Multiple)</label>
+                        <div class="multi-select-container" id="customerSelectContainer">
+                            <div class="selected-tags" onclick="toggleCustomerDropdown()">
+                                <!-- Selected tags appear here -->
+                                <span class="text-gray-400 text-sm self-center ml-2 select-placeholder">Select customers...</span>
+                            </div>
+                            <div class="dropdown-list" id="customerDropdownList">
+                                <div class="dropdown-item" onclick="addCustomer('CUST-001: John Doe')">CUST-001: John Doe</div>
+                                <div class="dropdown-item" onclick="addCustomer('CUST-002: Jane Smith')">CUST-002: Jane Smith</div>
+                                <div class="dropdown-item" onclick="addCustomer('CUST-003: Alice Wonder')">CUST-003: Alice Wonder</div>
+                                <div class="dropdown-item" onclick="addCustomer('CUST-004: Bob Builder')">CUST-004: Bob Builder</div>
+                            </div>
+                        </div>
+                        <!-- Hidden input to hold actual values for form submission -->
+                        <input type="hidden" name="customerIds" id="hiddenCustomerIds">
+                    </div>
+
+                    <!-- Mixed Row: Radio, Select, Coupon, Amount -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        
+                        <!-- Radios -->
+                        <div class="col-span-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Res. Type</label>
+                            <div class="flex gap-4">
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="resType" value="Type 1" class="text-blue-600 focus:ring-blue-500" checked>
+                                    <span class="ml-2 text-sm text-gray-600">Type 1</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="resType" value="Type 2" class="text-blue-600 focus:ring-blue-500">
+                                    <span class="ml-2 text-sm text-gray-600">Type 2</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Travel Type Select -->
+                        <div class="col-span-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Travel Type</label>
+                            <select name="travelType" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                                <option value="">Select...</option>
+                                <option value="Individual">Individual</option>
+                                <option value="Multiple">Multiple</option>
+                                <option value="Family">Family</option>
+                                <option value="Business">Business</option>
+                            </select>
+                        </div>
+
+                        <!-- Coupon Code -->
+                        <div class="col-span-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Coupon</label>
+                            <input type="text" name="coupon" placeholder="CODE"
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm uppercase">
+                        </div>
+
+                        <!-- Amount -->
+                        <div class="col-span-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Amount ($)</label>
+                            <input type="number" name="amount" placeholder="0.00"
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Modal Footer / Buttons -->
+                <div class="flex justify-end gap-3 mt-8 pt-4 border-t">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" id="submitBtn" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition shadow flex items-center gap-2">
+                        <span>Submit Data</span>
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2"></div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // --- 1. SIMULATED JSON CONFIGURATION ---
+        // In a real app, you would fetch this from 'dummy_fee_detail.json'
+        const responseCatalog = {
+            "api_responses": [
+                { "code": "SUCCESS_201", "type": "success", "message": "Fee detail successfully added to the database." },
+                { "code": "ERR_VALIDATION_001", "type": "error", "message": "Validation Error: Reservation IDXXXX is missing." },
+                { "code": "ERR_VALIDATION_002", "type": "error", "message": "Validation Error: Amount must be a positive number." },
+                { "code": "ERR_VALIDATION_003", "type": "error", "message": "Validation Error: You must select at least one customer." },
+                { "code": "ERR_VALIDATION_004", "type": "error", "message": "Validation Error: Travel Type is required." }
+            ]
+        };
+
+        // Helper to find message by code
+        function getMessageByCode(code) {
+            const found = responseCatalog.api_responses.find(item => item.code === code);
+            return found ? found.message : "Unknown Error Occurred";
+        }
+
+        // --- STATE MANAGEMENT ---
+        let selectedCustomers = [];
+
+        // --- UI FUNCTIONS ---
+        function openModal() {
+            document.getElementById('feeModal').classList.remove('hidden');
+            document.getElementById('feeModal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('feeModal').classList.add('hidden');
+            document.getElementById('feeModal').classList.remove('flex');
+            resetForm();
+        }
+
+        function resetForm() {
+            document.getElementById('addFeeForm').reset();
+            selectedCustomers = [];
+            renderSelectedCustomers();
+        }
+
+        // --- MULTI-SELECT SIMULATION (Like Select2) ---
+        function toggleCustomerDropdown() {
+            const list = document.getElementById('customerDropdownList');
+            list.style.display = list.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function addCustomer(value) {
+            if (!selectedCustomers.includes(value)) {
+                selectedCustomers.push(value);
+                renderSelectedCustomers();
+                // Update hidden input for form submission
+                document.getElementById('hiddenCustomerIds').value = JSON.stringify(selectedCustomers);
+            }
+            toggleCustomerDropdown();
+        }
+
+        function removeCustomer(value) {
+            selectedCustomers = selectedCustomers.filter(c => c !== value);
+            renderSelectedCustomers();
+            document.getElementById('hiddenCustomerIds').value = JSON.stringify(selectedCustomers);
+        }
+
+        function renderSelectedCustomers() {
+            const container = document.querySelector('.selected-tags');
+            const placeholder = container.querySelector('.select-placeholder');
+            
+            // Clear existing tags (keep placeholder ref)
+            container.innerHTML = '';
+
+            if (selectedCustomers.length === 0) {
+                const span = document.createElement('span');
+                span.className = 'text-gray-400 text-sm self-center ml-2 select-placeholder';
+                span.innerText = 'Select customers...';
+                container.appendChild(span);
+            } else {
+                selectedCustomers.forEach(cust => {
+                    const tag = document.createElement('div');
+                    tag.className = 'tag';
+                    tag.innerHTML = `
+                        <span>${cust.split(':')[0]}</span>
+                        <span class="tag-close" onclick="removeCustomer('${cust}'); event.stopPropagation();">&times;</span>
+                    `;
+                    container.appendChild(tag);
+                });
+            }
+        }
+
+        // Close dropdown if clicked outside
+        window.onclick = function(event) {
+            if (!event.target.closest('.multi-select-container')) {
+                document.getElementById('customerDropdownList').style.display = 'none';
+            }
+        }
+
+        // --- MOCK BACKEND API (The "Colleague's" Code) ---
+        // Updated to return CODES instead of messages
+        async function mockBackendApi(endpoint, method, data) {
+            console.group("🔌 API Request Started"); // DevTools grouping
+            console.log(`Endpoint: ${endpoint}`);
+            console.log("Payload:", data);
+            
+            logToScreen('REQUEST', { endpoint, method, payload: data });
+
+            // Simulate network delay (1 second)
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            let response;
+
+            // SIMULATE SERVER-SIDE VALIDATION
+            // 1. Check Reservation ID
+            if (!data.reservationId || data.reservationId.trim() === "") {
+                response = { status: 400, success: false, code: "ERR_VALIDATION_001" };
+                console.error("❌ Server Response:", response); // Shows red in DevTools
+            }
+            // 2. Check Amount
+            else if (!data.amount || parseFloat(data.amount) <= 0) {
+                response = { status: 400, success: false, code: "ERR_VALIDATION_002" };
+                console.error("❌ Server Response:", response);
+            }
+            // 3. Check Customers
+            else if (!data.customerIds || JSON.parse(data.customerIds).length === 0) {
+                response = { status: 400, success: false, code: "ERR_VALIDATION_003" };
+                console.error("❌ Server Response:", response);
+            }
+             // 4. Travel Type Check
+            else if (!data.travelType) {
+                response = { status: 400, success: false, code: "ERR_VALIDATION_004" };
+                console.error("❌ Server Response:", response);
+            }
+            // Success Case
+            else {
+                response = {
+                    status: 201, // Created
+                    success: true,
+                    code: "SUCCESS_201",
+                    data: {
+                        id: Math.floor(Math.random() * 10000),
+                        ...data,
+                        createdAt: new Date().toISOString()
+                    }
+                };
+                console.log("✅ Server Response:", response); // Shows normal in DevTools
+            }
+
+            console.groupEnd(); // End DevTools grouping
+            logToScreen('RESPONSE', response);
+            return response;
+        }
+
+        // --- FORM HANDLING ---
+        async function handleSubmit(e) {
+            e.preventDefault(); 
+            
+            const btn = document.getElementById('submitBtn');
+            const originalText = btn.innerHTML;
+            
+            // 1. Collect Form Data
+            const formData = new FormData(e.target);
+            const dataPayload = Object.fromEntries(formData.entries());
+
+            // 2. UI Loading State
+            btn.disabled = true;
+            btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Sending...`;
+
+            try {
+                // 3. Call the Mock API
+                const response = await mockBackendApi('/api/v1/fee-details/create', 'POST', dataPayload);
+
+                // 4. LOOK UP MESSAGE FROM JSON CATALOG
+                const userMessage = getMessageByCode(response.code);
+
+                if (response.success) {
+                    showToast(userMessage, 'success');
+                    closeModal();
+                    addTableRow(response.data);
+                } else {
+                    // Show the error message found in the catalog
+                    showToast(userMessage, 'error');
+                }
+
+            } catch (err) {
+                showToast("Critical Network Error", 'error');
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        // --- HELPER FUNCTIONS ---
+
+        function showToast(message, type) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const colors = type === 'success' 
+                ? 'bg-green-500 text-white border-green-600' 
+                : 'bg-red-500 text-white border-red-600';
+
+            toast.className = `toast px-6 py-4 rounded shadow-lg mb-3 font-medium ${colors} flex items-center gap-3 min-w-[300px]`;
+            
+            // Icon based on type
+            const icon = type === 'success' 
+                ? `<i data-lucide="check-circle" class="w-5 h-5"></i>` 
+                : `<i data-lucide="alert-circle" class="w-5 h-5"></i>`;
+
+            toast.innerHTML = `${icon} <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            lucide.createIcons(); // Re-render icons
+
+            // Remove after 4 seconds
+            setTimeout(() => {
+                toast.remove();
+            }, 4000);
+        }
+
+        function addTableRow(data) {
+            const tbody = document.getElementById('feeTableBody');
+            const row = document.createElement('tr');
+            row.className = "bg-blue-50 animate-pulse"; // Highlight new row
+            
+            // Format customer IDs for display
+            const custDisplay = JSON.parse(data.customerIds).map(c => c.split(':')[0]).join(', ');
+
+            row.innerHTML = `
+                <td class="p-4 font-mono text-gray-600">${data.reservationId}</td>
+                <td class="p-4"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">${custDisplay}</span></td>
+                <td class="p-4">${data.resType}</td>
+                <td class="p-4">${data.travelType}</td>
+                <td class="p-4 font-medium text-gray-900">$${parseFloat(data.amount).toFixed(2)}</td>
+                <td class="p-4 text-green-600">Just Added</td>
+            `;
+            
+            tbody.insertBefore(row, tbody.firstChild);
+            
+            // Remove animation class after a moment
+            setTimeout(() => row.classList.remove('animate-pulse', 'bg-blue-50'), 2000);
+        }
+
+        function logToScreen(type, data) {
+            const logBox = document.getElementById('apiLog');
+            const entry = document.createElement('div');
+            entry.className = "mb-2 border-b border-gray-800 pb-2";
+            
+            const color = type === 'REQUEST' ? 'text-blue-400' : (data.success ? 'text-green-400' : 'text-red-400');
+            const time = new Date().toLocaleTimeString();
+
+            entry.innerHTML = `
+                <span class="text-gray-500">[${time}]</span> 
+                <span class="${color} font-bold">${type}:</span> 
+                <span class="text-gray-300 break-all">${JSON.stringify(data)}</span>
+            `;
+            
+            logBox.prepend(entry);
+        }
+
+    </script>
+</body>
+</html>

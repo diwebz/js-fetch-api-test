@@ -1,0 +1,29 @@
+{
+  "api_responses": [
+    {
+      "code": "SUCCESS_201",
+      "type": "success",
+      "message": "Fee detail successfully added to the database."
+    },
+    {
+      "code": "ERR_VALIDATION_001",
+      "type": "error",
+      "message": "Validation Error: Reservation ID is missing."
+    },
+    {
+      "code": "ERR_VALIDATION_002",
+      "type": "error",
+      "message": "Validation Error: Amount must be a positive number."
+    },
+    {
+      "code": "ERR_VALIDATION_003",
+      "type": "error",
+      "message": "Validation Error: You must select at least one customer."
+    },
+    {
+      "code": "ERR_VALIDATION_004",
+      "type": "error",
+      "message": "Validation Error: Travel Type is required."
+    }
+  ]
+}
